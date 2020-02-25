@@ -3797,12 +3797,16 @@ void CameraService::updateStatus(StatusInternal status, const String8& cameraId,
             notifyPhysicalCameraStatusLocked(mapToInterface(status), cameraId, deviceKind);
 
             for (auto& listener : mListenerList) {
-                bool isVendorListener = listener->isVendorListener();
-                if (shouldSkipStatusUpdates(deviceKind, isVendorListener,
-                        listener->getListenerPid(), listener->getListenerUid()) ||
-                        (isVendorListener && !supportsHAL3)) {
-                    ALOGV("Skipping discovery callback for system-only camera/HAL1 device %s",
+                bool isVendorListener = listener.first;
+                if (isVendorListener && !supportsHAL3) {
+                    ALOGV("Skipping vendor listener camera discovery callback for  HAL1 camera %s",
                             cameraId.c_str());
+                    continue;
+                }
+
+                if (!isVendorListener && isHidden) {
+                    ALOGV("Skipping camera discovery callback for system-only camera %s",
+                          cameraId.c_str());
                     continue;
                 }
                 listener->getListener()->onStatusChanged(mapToInterface(status),
